@@ -635,7 +635,7 @@ async function shareOnWhatsApp() {
     submitToSheet();
 }
 
-// Submit to Google Sheet
+// Submit to Google Sheet (Updated payload sending mechanism)
 document.getElementById('trackerForm').addEventListener('submit', function(e) {
     e.preventDefault(); submitToSheet();
 });
@@ -648,23 +648,27 @@ function submitToSheet() {
     if (!phc)               { setStatus('PHC Name निवडा!', 'error'); return; }
     if (!empId || !empName) { setStatus('Employee ID आणि Name भरा!', 'error'); return; }
 
-    const payload = {
-        phcName: phc,
-        empId: empId,
-        empName: empName,
-        latitude:  lat  || 'N/A',
-        longitude: long || 'N/A',
-        dateTime:  dateTimeStr || new Date().toLocaleString('en-IN', {timeZone:'Asia/Kolkata'}),
-        photoData: finalDataUrl || ''
-    };
+    setStatus('Google Sheet मध्ये नोंद होत आहे...', 'info');
+
+    const formData = new URLSearchParams();
+    formData.append('phcName', phc);
+    formData.append('empId', empId);
+    formData.append('empName', empName);
+    formData.append('latitude', lat || 'N/A');
+    formData.append('longitude', long || 'N/A');
+    formData.append('dateTime', dateTimeStr || new Date().toLocaleString('en-IN', {timeZone:'Asia/Kolkata'}));
+    formData.append('photoData', finalDataUrl || '');
 
     fetch(WEB_APP_URL, {
-        method: 'POST', mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: formData.toString()
     })
     .then(() => {
-        setStatus('✅ हजेरी Google Sheet मध्ये यशस्वीरित्या नोंदीवली गेली!', 'success');
+        setStatus('✅ हजेरी Google Sheet मध्ये यशस्वीरित्या नोंदवली गेली!', 'success');
         setTimeout(() => {
             document.getElementById('trackerForm').reset();
             document.getElementById('preview-box').style.display = 'none';
@@ -676,7 +680,8 @@ function submitToSheet() {
             finalDataUrl = null;
         }, 3000);
     })
-    .catch(() => {
+    .catch((err) => {
+        console.error(err);
         setStatus('❌ Sheet Save झाले नाही. Internet तपासा.', 'error');
         document.getElementById('whatsappBtn').disabled = false;
     });
