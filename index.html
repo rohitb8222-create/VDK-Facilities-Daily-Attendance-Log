@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VDK Facilities - Daily Attendance</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Noto+Sans+Devanagari:wght@400;600&display=swap');
+
+        :root {
+            --primary: #7f171f;
+            --accent: #d93845;
+            --accent2: #ff4d5a;
+            --bg: #0d0607;
+            --card-bg: #170d0f;
+            --card2: #241215;
+            --text: #e2e8f0;
+            --muted: #8c7b7d;
+            --border: rgba(217, 56, 69, 0.3);
+            --danger: #ef4444;
+            --warn: #f59e0b;
+            --success: #10b981;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Noto Sans Devanagari', 'Segoe UI', sans-serif;
+            background: var(--bg);
+            background-image: 
+                radial-gradient(ellipse at 20% 20%, rgba(127,23,31,0.2) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(217,56,69,0.1) 0%, transparent 50%);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .app-card {
+            background: var(--card-bg);
+            padding: 28px 24px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 0 1px var(--border);
+            max-width: 560px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .app-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, var(--primary), var(--accent), transparent);
+        }
+
+        .brand-header { text-align: center; margin-bottom: 24px; }
+
+        .brand-header h2 {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 30px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .subtitle {
+            display: inline-block;
+            color: var(--accent2);
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 6px;
+            padding: 4px 16px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            background: rgba(127,23,31,0.2);
+        }
+
+        .section-divider { border: none; border-top: 1px solid rgba(255,255,255,0.08); margin: 20px 0; }
+
+        .form-group { margin-bottom: 16px; }
+
+        label {
+            display: block;
+            margin-bottom: 7px;
+            font-weight: 600;
+            color: #d1c2c4;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        input[type="text"], select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1.5px solid rgba(140,123,125,0.4);
+            background: rgba(20,10,12,0.9);
+            color: #fff;
+            border-radius: 10px;
+            font-size: 15px;
+            font-family: inherit;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input[type="text"]:focus, select:focus {
+            border-color: var(--accent);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(217,56,69,0.25);
+        }
+
+        input[type="text"][readonly] {
+            background: rgba(36,18,21,0.8);
+            color: #b0a0a2;
+            border-color: rgba(140,123,125,0.2);
+        }
+
+        .file-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 14px;
+            border: 1.5px dashed rgba(217,56,69,0.5);
+            background: rgba(20,10,12,0.6);
+            color: #d1c2c4;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .file-label:hover { border-color: var(--accent); color: var(--accent2); background: rgba(127,23,31,0.15); }
+        .file-label.loaded { border-color: var(--success); color: var(--success); border-style: solid; background: rgba(16,185,129,0.08); }
+
+        input[type="file"] { display: none; }
+
+        .row-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+        .status-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            margin: 14px 0;
+            min-height: 42px;
+            background: rgba(20,10,12,0.6);
+            border: 1px solid rgba(255,255,255,0.06);
+            transition: all 0.3s;
+        }
+
+        .status-bar.success { color: var(--success); border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.08); }
+        .status-bar.error   { color: var(--danger);  border-color: rgba(239,68,68,0.3);  background: rgba(239,68,68,0.08); }
+        .status-bar.warn    { color: var(--warn);    border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.08); }
+        .status-bar.info    { color: #60a5fa;        border-color: rgba(96,165,250,0.3); background: rgba(96,165,250,0.08); }
+
+        #preview-box {
+            margin-top: 20px;
+            display: none;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: #000;
+            overflow: hidden;
+        }
+
+        .preview-header {
+            padding: 10px 16px;
+            background: rgba(127,23,31,0.3);
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent2);
+            border-bottom: 1px solid var(--border);
+        }
+
+        #final-photo { width: 100%; display: block; }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            padding: 14px;
+        }
+
+        .btn {
+            padding: 13px 10px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+        .btn:not(:disabled):hover { transform: translateY(-2px); filter: brightness(1.1); }
+        .btn:not(:disabled):active { transform: translateY(0); }
+
+        .btn-whatsapp {
+            background: linear-gradient(135deg, #25d366, #128c7e);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(37,211,102,0.3);
+        }
+
+        .btn-submit-full {
+            width: 100%;
+            padding: 15px;
+            margin-top: 16px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: #fff;
+            font-size: 16px;
+            box-shadow: 0 4px 20px rgba(127,23,31,0.4);
+        }
+
+        .gps-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .gps-chip.active  { background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.3); }
+        .gps-chip.waiting { background: rgba(245,158,11,0.15); color: var(--warn);   border: 1px solid rgba(245,158,11,0.3); }
+        .gps-chip.error   { background: rgba(239,68,68,0.15);  color: var(--danger); border: 1px solid rgba(239,68,68,0.3); }
+
+        .note-box {
+            background: rgba(127,23,31,0.15);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 12px;
+            color: #d1c2c4;
+            margin-bottom: 4px;
+        }
+
+        .pulse { animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+        @media (max-width: 400px) {
+            .row-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-card">
+    <div class="brand-header">
+        <h2>VDK Facilities</h2>
+        <div class="subtitle">📋 Daily Attendance Log</div>
+    </div>
+
+    <div id="gpsChip" class="gps-chip waiting">
+        <span class="pulse">●</span> GPS शोधत आहे...
+    </div>
+
+    <form id="trackerForm">
+
+        <div class="form-group">
+            <label>१. PHC Name निवडा किंवा टाईप करा</label>
+            <input type="text" id="phcName" list="phcList" placeholder="उदा. Dheku, Patonda..." required autocomplete="off">
+            <datalist id="phcList">
+                <option value="Dheku">
+                <option value="Mandal">
+                <option value="Patonda">
+                <option value="Girad">
+                <option value="Kajgaon">
+                <option value="Kinhi">
+                <option value="Pimpalgaon">
+                <option value="Varadsim">
+                <option value="Engaon">
+                <option value="Dahiwad">
+                <option value="Khedgaon">
+                <option value="Londhe">
+                <option value="Talegaon">
+                <option value="Tarwade">
+                <option value="Adawad">
+                <option value="Chahardi">
+                <option value="Gorgawale">
+                <option value="Hated">
+                <option value="Vaijapur">
+                <option value="Chandsar">
+                <option value="Nanded">
+                <option value="Salva">
+                <option value="Kasoda">
+                <option value="Talai">
+                <option value="Ringangaon">
+                <option value="Bhadli">
+                <option value="Dhamangaon">
+                <option value="Mhasawad">
+                <option value="Nashirabad">
+                <option value="Wakdi">
+                <option value="Garkheda">
+                <option value="Neri">
+                <option value="Betawad">
+                <option value="Fattepur">
+                <option value="Anturli">
+                <option value="Kurha">
+                <option value="Uchanda">
+                <option value="Nandara">
+                <option value="Lohtar">
+                <option value="Nagardeola">
+                <option value="Mangrul">
+                <option value="Ainpur">
+                <option value="Lohara">
+                <option value="Nimbhora">
+                <option value="Thorgaon">
+                <option value="Waghoda">
+                <option value="Padisa">
+                <option value="Savakheda sim">
+                <option value="Parola (Shelave)">
+            </datalist>
+        </div>
+
+        <div class="row-grid">
+            <div class="form-group">
+                <label>२. Employee ID</label>
+                <input type="text" id="empId" placeholder="उदा. EMP101" required autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label>३. Employee Name</label>
+                <input type="text" id="empName" placeholder="नाव आपोआप येईल..." readonly>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>४. हजेरी फोटो काढा 📸</label>
+            <label class="file-label" id="cameraLabel" for="cameraInput">
+                <span>📷</span>
+                <span id="cameraLabelText">कॅमेरा उघडा</span>
+            </label>
+            <input type="file" id="cameraInput" accept="image/*" capture="environment" required>
+        </div>
+
+        <div id="statusMsg" class="status-bar info">
+            <span>ℹ️</span>
+            <span id="statusText">GPS आणि Employee ID तयार करा, मग फोटो काढा.</span>
+        </div>
+
+        <!-- Preview box -->
+        <div id="preview-box">
+            <div class="preview-header">🎯 टाईमस्टॅम्प फोटो तयार झाला</div>
+            <img id="final-photo" src="" alt="Final Stamped Image">
+            <div class="action-buttons">
+                <div class="note-box">📌 WhatsApp Share केल्यावर Google Sheet मध्ये हजेरी <strong>आपोआप</strong> Save होईल.</div>
+                <button type="button" class="btn btn-whatsapp" id="whatsappBtn" onclick="shareOnWhatsApp()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                    WhatsApp Share करा (Sheet ला Auto Save)
+                </button>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-submit-full" id="submitBtnMain">
+            📤 Attendance Submit करा
+        </button>
+
+    </form>
+</div>
+
+<canvas id="mainCanvas" style="display:none;"></canvas>
+
+<script>
+const CSV_URL     = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQRRN2tnLhCl4tZO9fX4ofoqhOWnqkBc0Dduj5CozBrwkdPnq4cYOzPgntEirQ9nXSeGr_sv1UEep9y/pub?output=csv";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwopDTomoun2TDbd4B68kz5NjzzT6xoprTO4_iVz7dscexy5J4trYXdUKg2KB8RNsiF/exec";
+const MAPS_API_KEY = "AIzaSyBNe-keJAGVyw40JSvW08Qns5ouWg-dgeA";
+
+let lat = null, long = null, dateTimeStr = "";
+let finalDataUrl = null;
+let employeeData = {};
+
+const empIdInput   = document.getElementById('empId');
+const empNameInput = document.getElementById('empName');
+const phcInput     = document.getElementById('phcName');
+const cameraInput  = document.getElementById('cameraInput');
+const canvas       = document.getElementById('mainCanvas');
+const ctx          = canvas.getContext('2d');
+const finalPhoto   = document.getElementById('final-photo');
+const statusDiv    = document.getElementById('statusMsg');
+const statusText   = document.getElementById('statusText');
+const gpsChip      = document.getElementById('gpsChip');
+
+function setStatus(msg, type = 'info') {
+    const icons = { success:'✅', error:'❌', warn:'⚠️', info:'ℹ️' };
+    statusDiv.className = `status-bar ${type}`;
+    statusText.textContent = msg;
+    statusDiv.querySelector('span:first-child').textContent = icons[type] || 'ℹ️';
+}
+
+// GPS Load
+window.addEventListener('load', () => {
+    if (!navigator.geolocation) {
+        gpsChip.className = 'gps-chip error';
+        gpsChip.innerHTML = '<span>●</span> GPS उपलब्ध नाही';
+    } else {
+        navigator.geolocation.getCurrentPosition(
+            pos => {
+                lat  = pos.coords.latitude.toFixed(6);
+                long = pos.coords.longitude.toFixed(6);
+                gpsChip.className = 'gps-chip active';
+                gpsChip.innerHTML = `<span>●</span> GPS: ${lat}, ${long}`;
+            },
+            () => {
+                gpsChip.className = 'gps-chip error';
+                gpsChip.innerHTML = '<span>●</span> GPS बंद आहे — Settings मध्ये चालू करा';
+                setStatus('GPS चालू करा, नंतर पान Refresh करा.', 'warn');
+            },
+            { enableHighAccuracy: true, timeout: 15000 }
+        );
+    }
+    preloadCSV();
+});
+
+// CSV Lookup
+function preloadCSV() {
+    fetch(CSV_URL)
+    .then(r => { if (!r.ok) throw new Error(); return r.text(); })
+    .then(csv => {
+        employeeData = {};
+        csv.trim().split('\n').forEach(line => {
+            const cols = parseCSVLine(line);
+            if (cols.length >= 2) {
+                const id = cols[0].trim().toLowerCase();
+                if (id) employeeData[id] = cols[1].trim();
+            }
+        });
+        console.log(`✅ ${Object.keys(employeeData).length} employees loaded`);
+    })
+    .catch(() => setStatus('Sheet connect झाली नाही. Internet तपासा.', 'warn'));
+}
+
+function parseCSVLine(line) {
+    const result = []; let current = ''; let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+        if (line[i] === '"') { inQuotes = !inQuotes; }
+        else if (line[i] === ',' && !inQuotes) { result.push(current); current = ''; }
+        else { current += line[i]; }
+    }
+    result.push(current);
+    return result;
+}
+
+empIdInput.addEventListener('input',  lookupEmployee);
+empIdInput.addEventListener('change', lookupEmployee);
+empIdInput.addEventListener('blur',   lookupEmployee);
+
+function lookupEmployee() {
+    const id = empIdInput.value.trim().toLowerCase();
+    if (!id) { empNameInput.value = ''; return; }
+    if (Object.keys(employeeData).length > 0) {
+        if (employeeData[id]) {
+            empNameInput.value = employeeData[id];
+            setStatus(`✅ कर्मचारी सापडला: ${employeeData[id]}`, 'success');
+        } else {
+            empNameInput.value = '';
+            setStatus(`❌ ID "${empIdInput.value.trim()}" शीटमध्ये नाही.`, 'error');
+        }
+    } else {
+        setStatus('नाव शोधत आहे...', 'info');
+        fetch(CSV_URL).then(r => r.text()).then(csv => {
+            let found = false;
+            for (const line of csv.trim().split('\n')) {
+                const cols = parseCSVLine(line);
+                if (cols[0] && cols[0].trim().toLowerCase() === id) {
+                    empNameInput.value = cols[1].trim();
+                    setStatus(`✅ कर्मचारी: ${cols[1].trim()}`, 'success');
+                    found = true; break;
+                }
+            }
+            if (!found) { empNameInput.value = ''; setStatus(`❌ ID सापडला नाही.`, 'error'); }
+        }).catch(() => setStatus('Sheet connect झाली नाही.', 'error'));
+    }
+}
+
+// Watermark
+function drawWatermark() {
+    const wText = "VDK FACILITIES";
+    const wSize = Math.max(18, Math.floor(canvas.width * 0.028));
+    const padding = Math.floor(canvas.width * 0.018);
+    ctx.save();
+    ctx.font = `bold ${wSize}px Arial`;
+    const tw = ctx.measureText(wText).width;
+    const bw = tw + padding * 2 + 10;
+    const bh = wSize + padding * 1.4;
+    const bx = canvas.width - bw - 14;
+    const by = 14;
+    ctx.fillStyle = "rgba(0,0,0,0.65)";
+    ctx.beginPath();
+    ctx.roundRect(bx, by, bw, bh, 8);
+    ctx.fill();
+    ctx.fillStyle = "#d93845";
+    ctx.fillRect(bx, by, 4, bh);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = `bold ${wSize}px Arial`;
+    ctx.textBaseline = 'middle';
+    ctx.fillText(wText, bx + padding + 8, by + bh / 2);
+    ctx.restore();
+}
+
+// Camera Input & Processing
+cameraInput.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const phc     = phcInput.value.trim();
+    const empId   = empIdInput.value.trim();
+    const empName = empNameInput.value.trim();
+
+    if (!phc)     { setStatus('आधी PHC Name निवडा!', 'warn'); return; }
+    if (!empId)   { setStatus('आधी Employee ID टाका!', 'warn'); return; }
+    if (!empName) { setStatus('Employee Name सापडला नाही — ID तपासा!', 'error'); return; }
+
+    setStatus('टाईमस्टॅम्प फोटो तयार होत आहे...', 'info');
+    document.getElementById('cameraLabel').classList.add('loaded');
+    document.getElementById('cameraLabelText').textContent = '✅ ' + file.name;
+    dateTimeStr = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+    const latStr = lat || 'N/A', longStr = long || 'N/A';
+
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+        const userImg = new Image();
+        userImg.onload = function() {
+            canvas.width = userImg.width; canvas.height = userImg.height;
+            ctx.drawImage(userImg, 0, 0);
+            const bannerH  = Math.max(120, canvas.height * 0.18);
+            const baseSize = Math.max(16, Math.floor(canvas.width * 0.022));
+
+            function drawBanner() {
+                ctx.fillStyle = "rgba(13,6,7,0.92)";
+                ctx.fillRect(0, canvas.height - bannerH, canvas.width, bannerH);
+                ctx.fillStyle = "#d93845";
+                ctx.fillRect(0, canvas.height - bannerH, canvas.width, 3);
+
+                const mapSize = bannerH - 20;
+                const mapX = 12, mapY = canvas.height - bannerH + 10;
+                const useMap = MAPS_API_KEY && latStr !== 'N/A';
+
+                if (useMap) {
+                    const mapImg = new Image();
+                    mapImg.crossOrigin = "anonymous";
+                    mapImg.src = `https://maps.googleapis.com/maps/api/staticmap?center=${latStr},${longStr}&zoom=17&size=200x200&maptype=satellite&markers=color:red%7C${latStr},${longStr}&key=${MAPS_API_KEY}`;
+                    mapImg.onload  = () => { ctx.drawImage(mapImg, mapX, mapY, mapSize, mapSize); writeText(); };
+                    mapImg.onerror = () => { drawPlaceholder(); writeText(); };
+                } else { drawPlaceholder(); writeText(); }
+
+                function drawPlaceholder() {
+                    ctx.fillStyle = "#241215"; ctx.strokeStyle = "#d93845"; ctx.lineWidth = 2;
+                    ctx.beginPath(); ctx.roundRect(mapX, mapY, mapSize, mapSize, 6); ctx.fill(); ctx.stroke();
+                    ctx.fillStyle = "#d93845"; ctx.font = `bold ${baseSize - 2}px Arial`; ctx.textAlign = 'center';
+                    ctx.fillText("📍 GPS", mapX + mapSize/2, mapY + mapSize/2 - 8);
+                    ctx.fillStyle = "#8c7b7d"; ctx.font = `${baseSize - 6}px Arial`;
+                    ctx.fillText(latStr.substring(0,8), mapX + mapSize/2, mapY + mapSize/2 + 12);
+                    ctx.fillText(longStr.substring(0,8), mapX + mapSize/2, mapY + mapSize/2 + 26);
+                    ctx.textAlign = 'left';
+                }
+
+                function writeText() {
+                    const textX = mapSize + 30;
+                    const lineH = bannerH / 4;
+                    ctx.fillStyle = "#ff4d5a"; ctx.font = `bold ${baseSize + 3}px Arial`;
+                    ctx.fillText(`VDK FACILITIES — ATTENDANCE (${phc.toUpperCase()})`, textX, canvas.height - bannerH + lineH * 0.9);
+                    ctx.fillStyle = "#ffffff"; ctx.font = `bold ${baseSize}px Arial`;
+                    ctx.fillText(`ID: ${empId}   NAME: ${empName}`, textX, canvas.height - bannerH + lineH * 1.85);
+                    ctx.fillStyle = "#d1c2c4"; ctx.font = `${baseSize - 3}px Arial`;
+                    ctx.fillText(`LAT: ${latStr}   LNG: ${longStr}`, textX, canvas.height - bannerH + lineH * 2.7);
+                    ctx.fillText(`DATE-TIME: ${dateTimeStr}`, textX, canvas.height - bannerH + lineH * 3.45);
+                    drawWatermark();
+
+                    finalDataUrl = canvas.toDataURL('image/jpeg', 0.92);
+                    finalPhoto.src = finalDataUrl;
+                    document.getElementById('preview-box').style.display = 'block';
+                    document.getElementById('submitBtnMain').style.display = 'none';
+                    setStatus('✅ फोटो तयार! खाली WhatsApp Share करा — Sheet ला Auto Save होईल.', 'success');
+
+                    const a = document.createElement('a');
+                    a.download = `${empId}_VDK_Attendance.jpg`;
+                    a.href = finalDataUrl; a.click();
+                }
+            }
+            drawBanner();
+        };
+        userImg.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+});
+
+// WhatsApp Share
+async function shareOnWhatsApp() {
+    if (!finalDataUrl) { setStatus('आधी फोटो काढा!', 'warn'); return; }
+
+    const phc     = phcInput.value.trim();
+    const empId   = empIdInput.value.trim();
+    const empName = empNameInput.value.trim();
+    const text    = `📋 *VDK Facilities - Daily Attendance*\n🏥 PHC: ${phc}\n👤 ID: ${empId}\n📛 Name: ${empName}\n📍 GPS: ${lat||'N/A'}, ${long||'N/A'}\n🕐 ${dateTimeStr}`;
+
+    document.getElementById('whatsappBtn').disabled = true;
+
+    if (navigator.share && navigator.canShare) {
+        try {
+            const blob = await (await fetch(finalDataUrl)).blob();
+            const file = new File([blob], `${empId}_Attendance.jpg`, { type: 'image/jpeg' });
+            if (navigator.canShare({ files: [file] })) {
+                await navigator.share({ files: [file], text: text, title: 'Attendance Record' });
+                setStatus('✅ WhatsApp Share झाले! Sheet ला Save होत आहे...', 'success');
+                submitToSheet();
+                return;
+            }
+        } catch(err) {
+            if (err.name === 'AbortError') {
+                setStatus('Share रद्द केले.', 'warn');
+                document.getElementById('whatsappBtn').disabled = false;
+                return;
+            }
+        }
+    }
+
+    const waText = encodeURIComponent(text + '\n\n📸 (फोटो Gallery मधून attach करा)');
+    window.open(`https://wa.me/?text=${waText}`, '_blank');
+    setStatus('✅ WhatsApp उघडले! Sheet ला Save होत आहे...', 'success');
+    submitToSheet();
+}
+
+// Submit to Google Sheet
+document.getElementById('trackerForm').addEventListener('submit', function(e) {
+    e.preventDefault(); submitToSheet();
+});
+
+function submitToSheet() {
+    const phc     = phcInput.value.trim();
+    const empId   = empIdInput.value.trim();
+    const empName = empNameInput.value.trim();
+
+    if (!phc)               { setStatus('PHC Name निवडा!', 'error'); return; }
+    if (!empId || !empName) { setStatus('Employee ID आणि Name भरा!', 'error'); return; }
+
+    const payload = {
+        phcName: phc,
+        empId: empId,
+        empName: empName,
+        latitude:  lat  || 'N/A',
+        longitude: long || 'N/A',
+        dateTime:  dateTimeStr || new Date().toLocaleString('en-IN', {timeZone:'Asia/Kolkata'}),
+        photoData: finalDataUrl || ''
+    };
+
+    fetch(WEB_APP_URL, {
+        method: 'POST', mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(() => {
+        setStatus('✅ हजेरी Google Sheet मध्ये यशस्वीरित्या नोंदीवली गेली!', 'success');
+        setTimeout(() => {
+            document.getElementById('trackerForm').reset();
+            document.getElementById('preview-box').style.display = 'none';
+            document.getElementById('submitBtnMain').style.display = 'block';
+            document.getElementById('whatsappBtn').disabled = false;
+            empNameInput.value = '';
+            document.getElementById('cameraLabel').classList.remove('loaded');
+            document.getElementById('cameraLabelText').textContent = 'कॅमेरा उघडा';
+            finalDataUrl = null;
+        }, 3000);
+    })
+    .catch(() => {
+        setStatus('❌ Sheet Save झाले नाही. Internet तपासा.', 'error');
+        document.getElementById('whatsappBtn').disabled = false;
+    });
+}
+</script>
+</body>
+</html>
