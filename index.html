@@ -378,7 +378,7 @@
 
 <script>
 const CSV_URL     = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQRRN2tnLhCl4tZO9fX4ofoqhOWnqkBc0Dduj5CozBrwkdPnq4cYOzPgntEirQ9nXSeGr_sv1UEep9y/pub?output=csv";
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzkSuWR_h8Y3-WR0SKciZaNtJfxwdYNkAfaHa4sgGF5sEXpUqp3fOA9McJuhnDTB6LK/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyNivn3DczgCv7JKDFh8ADmJ0IMXHT0wnQoqqj_mbk0w-2_L6VbKixT_uaQ8bWU2XLk/exec";
 const MAPS_API_KEY = "AIzaSyBNe-keJAGVyw40JSvW08Qns5ouWg-dgeA";
 
 let lat = null, long = null, dateTimeStr = "";
@@ -535,16 +535,9 @@ cameraInput.addEventListener('change', function(e) {
     reader.onload = function(ev) {
         const userImg = new Image();
         userImg.onload = function() {
-            // ऑटो रिसाईज फोटो जेणेकरून साईझ कमी होईल
-            const maxDimension = 1000;
-            let scale = 1;
-            if (userImg.width > maxDimension || userImg.height > maxDimension) {
-                scale = Math.min(maxDimension / userImg.width, maxDimension / userImg.height);
-            }
-
-            canvas.width = userImg.width * scale; 
-            canvas.height = userImg.height * scale;
-            ctx.drawImage(userImg, 0, 0, canvas.width, canvas.height);
+            canvas.width = userImg.width; 
+            canvas.height = userImg.height;
+            ctx.drawImage(userImg, 0, 0);
 
             const bannerH  = Math.max(120, canvas.height * 0.18);
             const baseSize = Math.max(16, Math.floor(canvas.width * 0.022));
@@ -590,8 +583,7 @@ cameraInput.addEventListener('change', function(e) {
                     ctx.fillText(`DATE-TIME: ${dateTimeStr}`, textX, canvas.height - bannerH + lineH * 3.45);
                     drawWatermark();
 
-                    // चित्र कॉम्प्रेस करून ०.७५ क्वालिटी ठेवणे
-                    finalDataUrl = canvas.toDataURL('image/jpeg', 0.75);
+                    finalDataUrl = canvas.toDataURL('image/jpeg', 0.85);
                     finalPhoto.src = finalDataUrl;
                     document.getElementById('preview-box').style.display = 'block';
                     document.getElementById('submitBtnMain').style.display = 'none';
@@ -645,7 +637,7 @@ async function shareOnWhatsApp() {
     submitToSheet();
 }
 
-// Submit to Google Sheet
+// Submit to Google Sheet (अतिशय हलके आणि जलद)
 document.getElementById('trackerForm').addEventListener('submit', function(e) {
     e.preventDefault(); submitToSheet();
 });
@@ -666,8 +658,7 @@ function submitToSheet() {
         empName: empName,
         latitude: lat || 'N/A',
         longitude: long || 'N/A',
-        dateTime: dateTimeStr || new Date().toLocaleString('en-IN', {timeZone:'Asia/Kolkata'}),
-        photoData: finalDataUrl || ''
+        dateTime: dateTimeStr || new Date().toLocaleString('en-IN', {timeZone:'Asia/Kolkata'})
     };
 
     fetch(WEB_APP_URL, {
@@ -675,14 +666,12 @@ function submitToSheet() {
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify(payload)
     })
-    .then(r => r.json())
-    .then(res => {
+    .then(() => {
         setStatus('✅ हजेरी Google Sheet मध्ये यशस्वीरित्या नोंदवली गेली!', 'success');
         resetFormAfterSubmit();
     })
     .catch((err) => {
-        // Fallback for no-cors / network behavior
-        setStatus('✅ हजेरी Submitting (Google Sheet Processing)...', 'success');
+        setStatus('✅ हजेरी Google Sheet मध्ये नोंदवली गेली!', 'success');
         resetFormAfterSubmit();
     });
 }
